@@ -34,7 +34,8 @@ public class GameManager : MonoBehaviour
     {
         game = new Game("Easy"); //((Game.Difficulty).0).ToString()
 
-        Board.GenerateNewWavePositions(2);
+        game.Start();
+        //Board.GenerateNewWavePositions(2);
 
         //game.DisplayWaves();
         /*for (int i = 0; i < game.TotalNumberOfWaves; i++)
@@ -127,6 +128,11 @@ public class Game
                 }
                 break;
         }
+    }
+
+    public void Start()
+    {
+        Board.Instance.SpawnWave(NextWave());
     }
 
     Queue<int[]> GenerateWaves(int _minMonsterNumber, int _maxMonsterNumber, int _minSum, int _maxSum)
@@ -240,7 +246,7 @@ public class Game
     #endregion
 }
 
-public sealed class Board
+/*public sealed class Board
 {
     #region Readonly Static Fields
     readonly static int width = 5;
@@ -265,27 +271,20 @@ public sealed class Board
     private Board() { }
     #endregion
 
-    //public static Node[,] board
-
     public static List<int> monstersOnBoard = new List<int>();
 
     //public static Dictionary<GameObject, Vector2> monsters = new Dictionary<GameObject, Vector2>();
 
-    public static Stack<KeyValuePair<DinoMovement, Vector2>> monstersToMove;
+    public static Stack<KeyValuePair<Dino, Vector2>> monstersToMove;
 
-    private static List<Vector2> newWavePositions;
+    //private static List<Vector2> newWavePositions;
 
     public static void Init()
     {
 
     }
 
-    public static int GetRandomMonster()
-    {
-        int randomIndex = UnityEngine.Random.Range(1, monstersOnBoard.Count + 1);
-
-        return monstersOnBoard[randomIndex];
-    }
+    
     
     public int MonsterSum(List<int> _monstersOnBoard)
     {
@@ -297,37 +296,15 @@ public sealed class Board
         return monsterSum;
     }
 
-    public static void GenerateNewWavePositions(int _waveSize)
+    
+
+    public static void UpdateBoard(List<Vector2> _newWavePositions)
     {
-        newWavePositions = new List<Vector2>();
-
-        List<int> yPositions = new List<int> { 0, 1, 2, 3 };
-
-        for (int i = 0; i < _waveSize; i++)
+        if (_newWavePositions != null)
         {
-            int randomIndex = UnityEngine.Random.Range(0, yPositions.Count);
-            newWavePositions.Add(new Vector2(4f, yPositions[randomIndex]));
-            yPositions.RemoveAt(randomIndex);
-        }
+            monstersToMove = new Stack<KeyValuePair<Dino, Vector2>>(); // GameObject?
 
-        foreach (Vector2 vect in newWavePositions) // DEBUG
-        {
-            Debug.Log(vect);
-        }
-    }
-
-    /*private static void InstantiateMonster()
-    {
-
-    }*/
-
-    public static void UpdateBoard()
-    {
-        if (newWavePositions != null)
-        {
-            monstersToMove = new Stack<KeyValuePair<DinoMovement, Vector2>>(); // GameObject?
-
-            foreach (Vector2 newWavePosition in newWavePositions)
+            foreach (Vector2 newWavePosition in _newWavePositions)
             {
                 // Instansiate new dino (at position outside of the board relative to newWavePosition)
                 // Set dino number from wave index ? How to access?
@@ -343,15 +320,15 @@ public sealed class Board
         if (_positionToCheck.y <= 0)
             return;
 
-        DinoMovement dinoMovement = new DinoMovement(); // Get DinoMovement from node at _positionToCheck
+        Dino dinoMovement = new Dino(); // Get DinoMovement from node at _positionToCheck
 
         if (dinoMovement != null) // Check if board position has a monster
         {
             Vector2 positionToMove = new Vector2(_positionToCheck.x, _positionToCheck.y - 1);
-            monstersToMove.Push(new KeyValuePair<DinoMovement, Vector2>(dinoMovement, positionToMove));
+            monstersToMove.Push(new KeyValuePair<Dino, Vector2>(dinoMovement, positionToMove));
             SetMonstersToMove(positionToMove);
         }
     }
-}
+}*/
 
 

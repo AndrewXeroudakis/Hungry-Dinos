@@ -657,6 +657,9 @@
     <Reference Include="Unity.VSCode.Editor">
       <HintPath>C:/Users/User/Desktop/My Projects/GitHub/Hungry-Dinos/Hungry Dinos/Library/ScriptAssemblies/Unity.VSCode.Editor.dll</HintPath>
     </Reference>
+    <Reference Include="Unity.InputSystem">
+      <HintPath>C:/Users/User/Desktop/My Projects/GitHub/Hungry-Dinos/Hungry Dinos/Library/ScriptAssemblies/Unity.InputSystem.dll</HintPath>
+    </Reference>
     <Reference Include="Unity.2D.SpriteShape.Editor">
       <HintPath>C:/Users/User/Desktop/My Projects/GitHub/Hungry-Dinos/Hungry Dinos/Library/ScriptAssemblies/Unity.2D.SpriteShape.Editor.dll</HintPath>
     </Reference>
@@ -725,9 +728,6 @@
     </Reference>
     <Reference Include="UnityEditor.UI">
       <HintPath>C:/Users/User/Desktop/My Projects/GitHub/Hungry-Dinos/Hungry Dinos/Library/ScriptAssemblies/UnityEditor.UI.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.InputSystem">
-      <HintPath>C:/Users/User/Desktop/My Projects/GitHub/Hungry-Dinos/Hungry Dinos/Library/ScriptAssemblies/Unity.InputSystem.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
