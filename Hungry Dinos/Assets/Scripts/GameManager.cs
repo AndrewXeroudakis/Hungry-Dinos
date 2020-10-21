@@ -132,7 +132,7 @@ public class Game
 
     public void Start()
     {
-        Board.Instance.SpawnWave(NextWave());
+        Board.Instance.NextWave(NextWave());
     }
 
     Queue<int[]> GenerateWaves(int _minMonsterNumber, int _maxMonsterNumber, int _minSum, int _maxSum)
@@ -214,12 +214,12 @@ public class Game
         spells.RemoveAt(_spellIndex);
 
         // Get a new spell equal to a monster from the board, needs to be decoupled
-        AddSpell(Board.GetRandomMonster());
+        AddSpell(Board.Instance.GetRandomMonster());
     }
 
     public bool Victory()
     {
-        if (waves.Count == 0 && Board.monstersOnBoard.Count == 0)
+        if (waves.Count == 0 && Board.Instance.GetMonstersOnBoard().Count == 0)
             return true;
         return false;
     }
@@ -296,8 +296,6 @@ public class Game
         return monsterSum;
     }
 
-    
-
     public static void UpdateBoard(List<Vector2> _newWavePositions)
     {
         if (_newWavePositions != null)
@@ -329,6 +327,8 @@ public class Game
             SetMonstersToMove(positionToMove);
         }
     }
+
+    
 }*/
 
 

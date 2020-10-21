@@ -26,7 +26,7 @@ public class Dino : MonoBehaviour
 
     Vector2 direction;
 
-    Vector2 target;
+    public Vector2 Target { get; private set; }
     float distanceFromTarget = 0f;
 
     [HideInInspector]
@@ -34,7 +34,7 @@ public class Dino : MonoBehaviour
 
     void Awake()
     {
-        target = new Vector2(transform.position.x, transform.position.y);
+        SetTarget(new Vector2(transform.position.x, transform.position.y));
         startXScale = transform.localScale.x;
         mouseControls = new MouseControls();
     }
@@ -64,7 +64,7 @@ public class Dino : MonoBehaviour
         Debug.Log("cell: " + cell);
         Debug.Log("position: " + position);*/
 
-        target = position;
+        Target = position;
         SetSpeed();
     }
 
@@ -74,14 +74,14 @@ public class Dino : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (ArrivedAt(target))
+        if (ArrivedAt(Target))
         {
-            rigidbody2D.position = target;
+            rigidbody2D.position = Target;
             SetSpeed();
         }
         else
         {
-            MoveTo(target);
+            MoveTo(Target);
         }
             
     }
@@ -95,7 +95,7 @@ public class Dino : MonoBehaviour
 
     private void SetSpeed()
     {
-        distanceFromTarget = Vector2.Distance(rigidbody2D.position, target);
+        distanceFromTarget = Vector2.Distance(rigidbody2D.position, Target);
 
         float speed = 0f;
 
@@ -131,7 +131,11 @@ public class Dino : MonoBehaviour
     public void SetNumber(int _number)
     {
         Number = _number;
+    }
 
-        Debug.Log("Number: " + Number); // DEBUG
+    public void SetTarget(Vector2 _target)
+    {
+        Target = _target;
+        SetSpeed();
     }
 }

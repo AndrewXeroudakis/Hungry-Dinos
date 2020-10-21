@@ -1090,6 +1090,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Doux
       objectReference: {fileID: 0}
+    - target: {fileID: 6375454093368680313, guid: 1f3bdcf611c243441b0f3b33d78645f5,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6375454093368680318, guid: 1f3bdcf611c243441b0f3b33d78645f5,
         type: 3}
       propertyPath: m_Enabled

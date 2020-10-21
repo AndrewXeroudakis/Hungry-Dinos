@@ -13,14 +13,12 @@ public class Board : MonoBehaviour
     readonly static private Vector2 TopLeft = new Vector2(-32, 47);
     #endregion
 
-    public static List<int> monstersOnBoard = new List<int>();
+    //public static List<int> monstersOnBoard = new List<int>();
+    public static Stack<KeyValuePair<Dino, Vector2>> monstersToMove;
 
     public Cell[,] grid;
     [SerializeField]
     private GameObject dino;
-
-
-
 
     void Awake()
     {
@@ -43,66 +41,126 @@ public class Board : MonoBehaviour
     {
         grid = new Cell[width, height];
 
+        monstersToMove = new Stack<KeyValuePair<Dino, Vector2>>();
+
         for (int x = 0; x < grid.GetLength(0); x++)
         {
             for (int y = 0; y < grid.GetLength(1); y++)
             {
-                grid[x, y] = new Cell(GetWorldPositionAt(new Vector2(x, y)));
+                grid[x, y] = new Cell(GetWorldPositionAt(new Vector2(x, -y)));
+                //Debug.Log("Coordinates: " + x + ", " + y + " --> Center: " + grid[x, y].Center); // DEBUG
+                //Instantiate(new GameObject(), grid[x, y].Center, Quaternion.identity);
             }
         }
     }
 
-    public void SpawnWave(int[] _wave)
+    public void NextWave(int[] _wave)
     {
-        List<Vector2> newWavePositions = GenerateNewWavePositions(_wave.Length);
-        InstantiateMonsters(_wave, newWavePositions);
-        // Move Dinos, Set target
+        monstersToMove = new Stack<KeyValuePair<Dino, Vector2>>();
+
+        List<Vector2> newWaveCoordinates = GenerateNewWaveCoordinates(_wave.Length);
+        InstantiateAndGetMonstersToMove(_wave, newWaveCoordinates);
+        MoveMonsters();
     }
 
-    public void UpdateGrid()
+    private void InstantiateAndGetMonstersToMove(int[] _wave, List<Vector2> _newWaveCoordinates)
     {
-
-    }
-
-    private void InstantiateMonsters(int[] _wave, List<Vector2> _newWavePositions)
-    {
-        for (int i = 0; i < _wave.Length; i++)
+        if (_wave.Length > 0 && _newWaveCoordinates.Count > 0)
         {
-            Vector2 worldPosition = GetWorldPositionAt(new Vector2(_newWavePositions[i].x + 2, _newWavePositions[i].y));
-            GameObject newMonster = Instantiate(dino, worldPosition, Quaternion.identity);
-            newMonster.GetComponent<Dino>().SetNumber(_wave[i]);
+            for (int i = 0; i < _wave.Length; i++)
+            {
+                Dino newDino = InstantiateMonster(_wave[i], _newWaveCoordinates[i]);
+                monstersToMove.Push(new KeyValuePair<Dino, Vector2>(newDino, _newWaveCoordinates[i]));
+                //Debug.Log("_newWaveCoordinates: "+ _newWaveCoordinates[i]); // DEBUG
+                GetMonstersToMove(_newWaveCoordinates[i]);
+            }
         }
     }
 
-    public static int GetRandomMonster()
+    private Dino InstantiateMonster(int _number, Vector2 newWavePosition)
     {
-        int randomIndex = UnityEngine.Random.Range(1, monstersOnBoard.Count + 1);
+        Vector2 worldPosition = GetWorldPositionAt(new Vector2(newWavePosition.x + 2, newWavePosition.y));
 
-        return monstersOnBoard[randomIndex];
+        GameObject newMonster = Instantiate(dino, worldPosition, Quaternion.identity);
+        Dino newDino = newMonster.GetComponent<Dino>();
+        newDino.SetNumber(_number);
+
+        return newDino;
     }
 
-    public static List<Vector2> GenerateNewWavePositions(int _waveSize)
+    private void GetMonstersToMove(Vector2 _positionToCheck)
     {
-        List<Vector2> newWavePositions = new List<Vector2>();
+        if (_positionToCheck.x <= 0)
+            return;
+
+        Dino dino = grid[(int)_positionToCheck.x, Mathf.Abs((int)_positionToCheck.y)].Dino; // Get Dino from node at _positionToCheck
+
+        if (dino != null) // Check if board position has a monster
+        {
+            Vector2 positionToMove = new Vector2(_positionToCheck.x - 1, _positionToCheck.y); 
+            monstersToMove.Push(new KeyValuePair<Dino, Vector2>(dino, positionToMove)); 
+            GetMonstersToMove(positionToMove);
+        }
+    }
+
+    public void MoveMonsters()
+    {
+        foreach (KeyValuePair<Dino, Vector2> keyValuePair in monstersToMove)
+        {
+            Vector2 cellCenter = keyValuePair.Value;
+            keyValuePair.Key.SetTarget(grid[(int)cellCenter.x, Mathf.Abs((int)cellCenter.y)].Center);
+
+            Debug.Log((int)cellCenter.x + ", " + (int)cellCenter.y); // DEBUG
+        }
+
+        monstersToMove.Clear();
+    }
+
+    public List<Dino> GetMonstersOnBoard()
+    {
+        List<Dino> monstersOnBoard = new List<Dino>();
+
+        for (int x = 0; x < grid.GetLength(0); x++)
+        {
+            for (int y = 0; y < grid.GetLength(1); y++)
+            {
+                monstersOnBoard.Add(grid[x, y].Dino);
+            }
+        }
+        return monstersOnBoard;
+    }
+
+    public int GetRandomMonster()
+    {
+        List<Dino> monstersOnBoard = GetMonstersOnBoard();
+
+        int randomIndex = UnityEngine.Random.Range(1, monstersOnBoard.Count + 1);
+
+        return monstersOnBoard[randomIndex].Number;
+    }
+
+    public static List<Vector2> GenerateNewWaveCoordinates(int _waveSize)
+    {
+        List<Vector2> newWaveCoordinates = new List<Vector2>();
 
         List<int> yPositions = new List<int> { 0, -1, -2, -3 };
 
         for (int i = 0; i < _waveSize; i++)
         {
             int randomIndex = UnityEngine.Random.Range(0, yPositions.Count);
-            newWavePositions.Add(new Vector2(4f, yPositions[randomIndex]));
+            newWaveCoordinates.Add(new Vector2(4f, yPositions[randomIndex]));
             yPositions.RemoveAt(randomIndex);
         }
 
-        foreach (Vector2 vect in newWavePositions) // DEBUG
+        foreach (Vector2 vect in newWaveCoordinates) // DEBUG
         {
             Debug.Log(vect);
         }
 
-        return newWavePositions;
+        return newWaveCoordinates;
     }
 
-    public Cell GetCellFromWorldPosition(Vector2 _worldPosition)
+    private Cell GetCellFromWorldPosition(Vector2 _worldPosition)
     {
         if (_worldPosition.x < TopLeft.x + cellSize
             || _worldPosition.x > TopLeft.x + width * cellSize
@@ -142,16 +200,16 @@ public class Board : MonoBehaviour
 
 public class Cell
 {
-    public Vector2 center;
-    public Dino dino = null;
+    public Vector2 Center { get; private set; }
+    public Dino Dino { get; private set; }
 
     public Cell(Vector2 _center)
     {
-        this.center = _center;
+        this.Center = _center;
     }
 
-    public void SetDino(Dino _dinoMovement)
+    public void SetDino(Dino _dino)
     {
-        dino = _dinoMovement;
+        Dino = _dino;
     }
 }
