@@ -11,14 +11,22 @@ public class Board : MonoBehaviour
     readonly static int height = 4;
     readonly static int cellSize = 24;
     readonly static private Vector2 TopLeft = new Vector2(-32, 47);
+    readonly static Vector2[] directions = {
+        Vector2.up,
+        Vector2.right,
+        Vector2.down,
+        Vector2.left
+    };
     #endregion
-
-    //public static List<int> monstersOnBoard = new List<int>();
-    public static Stack<KeyValuePair<Dino, Vector2>> monstersToMove;
 
     public Cell[,] grid;
     [SerializeField]
     private GameObject dino;
+
+    //public static List<int> monstersOnBoard = new List<int>();
+    public static Stack<KeyValuePair<Dino, Vector2>> monstersToMove;
+
+    public static List<Cell> selectedCells;
 
     void Awake()
     {
@@ -42,12 +50,13 @@ public class Board : MonoBehaviour
         grid = new Cell[width, height];
 
         monstersToMove = new Stack<KeyValuePair<Dino, Vector2>>();
+        selectedCells = new List<Cell>();
 
         for (int x = 0; x < grid.GetLength(0); x++)
         {
             for (int y = 0; y < grid.GetLength(1); y++)
             {
-                grid[x, y] = new Cell(GetWorldPositionAt(new Vector2(x, -y)));
+                grid[x, y] = new Cell(GetWorldPositionAt(new Vector2(x, -y)), x, y);
                 //Debug.Log("Coordinates: " + x + ", " + y + " --> Center: " + grid[x, y].Center); // DEBUG
                 //Instantiate(new GameObject(), grid[x, y].Center, Quaternion.identity);
             }
@@ -56,11 +65,12 @@ public class Board : MonoBehaviour
 
     public void NextWave(int[] _wave)
     {
-        monstersToMove = new Stack<KeyValuePair<Dino, Vector2>>();
-
-        List<Vector2> newWaveCoordinates = GenerateNewWaveCoordinates(_wave.Length);
-        InstantiateAndGetMonstersToMove(_wave, newWaveCoordinates);
-        MoveMonsters();
+        if (_wave != null)
+        {
+            List<Vector2> newWaveCoordinates = GenerateNewWaveCoordinates(_wave.Length);
+            InstantiateAndGetMonstersToMove(_wave, newWaveCoordinates);
+            MoveMonsters();
+        }
     }
 
     private void InstantiateAndGetMonstersToMove(int[] _wave, List<Vector2> _newWaveCoordinates)
@@ -98,7 +108,7 @@ public class Board : MonoBehaviour
         if (dino != null) // Check if board position has a monster
         {
             Vector2 positionToMove = new Vector2(_positionToCheck.x - 1, _positionToCheck.y); 
-            monstersToMove.Push(new KeyValuePair<Dino, Vector2>(dino, positionToMove)); 
+            monstersToMove.Push(new KeyValuePair<Dino, Vector2>(dino, positionToMove));
             GetMonstersToMove(positionToMove);
         }
     }
@@ -107,10 +117,12 @@ public class Board : MonoBehaviour
     {
         foreach (KeyValuePair<Dino, Vector2> keyValuePair in monstersToMove)
         {
-            Vector2 cellCenter = keyValuePair.Value;
-            keyValuePair.Key.SetTarget(grid[(int)cellCenter.x, Mathf.Abs((int)cellCenter.y)].Center);
-
-            Debug.Log((int)cellCenter.x + ", " + (int)cellCenter.y); // DEBUG
+            Dino dino = keyValuePair.Key;
+            Vector2 coordinatesToMove = keyValuePair.Value;
+            Cell cell = grid[(int)coordinatesToMove.x, Mathf.Abs((int)coordinatesToMove.y)];
+            cell.SetDino(dino);
+            dino.SetTarget(cell.Center);
+            //Debug.Log((int)cellCenter.x + ", " + (int)cellCenter.y); // DEBUG
         }
 
         monstersToMove.Clear();
@@ -160,15 +172,9 @@ public class Board : MonoBehaviour
         return newWaveCoordinates;
     }
 
-    private Cell GetCellFromWorldPosition(Vector2 _worldPosition)
+    public Cell GetCellFromCoordinates(Vector2 _cellCoordinates)
     {
-        if (_worldPosition.x < TopLeft.x + cellSize
-            || _worldPosition.x > TopLeft.x + width * cellSize
-            || _worldPosition.y > TopLeft.y
-            || _worldPosition.y < TopLeft.y - height * cellSize)
-            return null;
-
-        return grid[(int)(_worldPosition.x - TopLeft.x) / cellSize, (int)(_worldPosition.y - TopLeft.y) / cellSize];
+        return grid[(int)_cellCoordinates.x, Mathf.Abs((int)_cellCoordinates.y)];
     }
 
     public static Vector2 GetWorldPositionAt(Vector2 _cell)
@@ -196,16 +202,90 @@ public class Board : MonoBehaviour
 
         return gridCoordinates;
     }
+
+    public void SelectCell(Cell _cell)
+    {
+        if (selectedCells.Contains(_cell))
+        {
+            //selectedCells.Remove(_cell);
+            selectedCells.Clear();
+            return;
+        }
+        
+        if (_cell.Dino != null)
+        {
+            if (selectedCells.Count <= 0)
+            {
+                selectedCells.Add(_cell);
+                Debug.Log("Selected Cell: [" + _cell.gridX + ", " + _cell.gridY + "]"); // DEBUG
+                return;
+            }
+            else
+            {
+                List<Cell> neighbours = GetNeighbours(_cell);
+
+                foreach (Cell cell in neighbours)
+                {
+                    if (selectedCells.Contains(cell))
+                    {
+                        selectedCells.Add(_cell);
+                        Debug.Log("Selected Cell: [" + _cell.gridX + ", " + _cell.gridY + "]"); // DEBUG
+                    }
+                }
+            }
+        }
+    }
+
+    public void DestroySelectedDinos()
+    {
+        foreach (Cell cell in selectedCells)
+        {
+            Destroy(cell.Dino.gameObject);
+            cell.SetDino(null);
+        }
+
+        selectedCells.Clear();
+    }
+
+    private List<Cell> GetNeighbours(Cell _cell)
+    {
+        List<Cell> neighbours = new List<Cell>();
+
+        foreach (Vector2 direction in directions)
+        {
+            Vector2 gridCoordinates = new Vector2(_cell.gridX, _cell.gridY) + direction;
+            
+            if (gridCoordinates.x < 1
+                || gridCoordinates.x >= width
+                || gridCoordinates.y < 0
+                || gridCoordinates.y >= height)
+                continue;
+            
+            Cell neighbourCell = GetCellFromCoordinates(gridCoordinates);
+            if (neighbourCell.Dino == null)
+                continue;
+
+            //Debug.Log("gridCoordinates: " + gridCoordinates); // DEBUG
+
+            neighbours.Add(neighbourCell);
+        }
+
+        return neighbours;
+    }
 }
 
 public class Cell
 {
+    public int gridX { get; private set; }
+    public int gridY { get; private set; }
     public Vector2 Center { get; private set; }
     public Dino Dino { get; private set; }
 
-    public Cell(Vector2 _center)
+    public Cell(Vector2 _center, int _gridX, int _gridY)
     {
         this.Center = _center;
+        this.gridX = _gridX;
+        this.gridY = _gridY;
     }
 
     public void SetDino(Dino _dino)

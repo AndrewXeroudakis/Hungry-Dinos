@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class GameManager : MonoBehaviour
 {
@@ -10,8 +11,11 @@ public class GameManager : MonoBehaviour
     // Game Fields
     enum Turns { PC, Player}
     int currentTurn;
-
     Game game;
+
+    // Mouse Controls
+    private MouseControls mouseControls;
+    Vector2 input_mousePosition;
 
     void Awake()
     {
@@ -26,8 +30,19 @@ public class GameManager : MonoBehaviour
             Destroy(gameObject);
         }
         #endregion
-
+        
         //Debug.Log("I am a " + Instance.GetType());
+        mouseControls = new MouseControls();
+    }
+
+    void OnEnable()
+    {
+        mouseControls.Enable();
+    }
+
+    void OnDisable()
+    {
+        mouseControls.Disable();
     }
 
     void Start()
@@ -47,6 +62,10 @@ public class GameManager : MonoBehaviour
         //game.SpellAddition(2, 0);
         //game.SpellAddition(1, 0);
         //game.GenerateSpell(12);
+
+        mouseControls.PlayerMouse.Position.performed += mP => input_mousePosition = mP.ReadValue<Vector2>();
+        mouseControls.PlayerMouse.SelectCell.performed += SelectCell;
+        mouseControls.PlayerMouse.NextWave.performed += NextWave;
     }
 
     void Update()
@@ -54,7 +73,35 @@ public class GameManager : MonoBehaviour
 
     }
 
+    private void NextWave(InputAction.CallbackContext context)
+    {
+        /*Vector3 mousePos = input_mousePosition; //Camera.main.ScreenToWorldPoint();
+        Vector2 cell = Board.GetGridCoordinatesFromWorldPosition(mousePos);
+        Vector2 position = Board.GetWorldPositionAt(cell);
+        Debug.Log("mousePos: " + mousePos); // DEBUG
+        Debug.Log("cell: " + cell);
+        Debug.Log("position: " + position);*/
 
+        Board.Instance.DestroySelectedDinos();
+
+        game.Start();
+    }
+
+    private void SelectCell(InputAction.CallbackContext context)
+    {
+        Vector3 mousePos = Camera.main.ScreenToWorldPoint(input_mousePosition);
+        Vector2 cellCoordinates = Board.GetGridCoordinatesFromWorldPosition(mousePos);
+        if (cellCoordinates != -Vector2.one)
+        {
+            Cell cellAtMousePosition = Board.Instance.GetCellFromCoordinates(cellCoordinates);
+
+            Board.Instance.SelectCell(cellAtMousePosition);
+            //Vector2 position = Board.GetWorldPositionAt(cell);
+
+            /*Debug.Log("cellCoordinates: " + cellCoordinates); // DEBUG
+            Debug.Log("cellAtMousePosition: " + cellAtMousePosition);*/
+        }
+    }
 }
 
 public class Game
@@ -168,12 +215,17 @@ public class Game
 
     public int[] NextWave()
     {
-        int[] wave = waves.Peek();
-        waves.Dequeue();
-        CurrentWaveCount++;
+        int[] wave = null;
 
-        Debug.Log("Current wave count: " + CurrentWaveCount); // DEBUG
-        DisplayWave(wave); // DEBUG
+        if (waves.Count > 0)
+        {
+            wave = waves.Peek();
+            waves.Dequeue();
+            CurrentWaveCount++;
+
+            Debug.Log("Current wave count: " + CurrentWaveCount); // DEBUG
+            DisplayWave(wave); // DEBUG
+        }
 
         return wave;
     }

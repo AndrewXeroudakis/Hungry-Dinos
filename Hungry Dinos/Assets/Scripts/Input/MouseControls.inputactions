@@ -6,9 +6,17 @@
             "id": "775ec04e-733f-4a52-8c98-584aed21e29b",
             "actions": [
                 {
-                    "name": "SetTarget",
+                    "name": "SelectCell",
                     "type": "Button",
                     "id": "095cc67b-b7ba-43d4-a34f-4f820971eb47",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": ""
+                },
+                {
+                    "name": "NextWave",
+                    "type": "Button",
+                    "id": "728750dc-e690-40d4-8188-9503edb97df0",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": ""
@@ -30,7 +38,7 @@
                     "interactions": "Press",
                     "processors": "",
                     "groups": "",
-                    "action": "SetTarget",
+                    "action": "SelectCell",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -42,6 +50,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "Position",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "689c8f8c-81d4-436a-901d-a6edf9a93afa",
+                    "path": "<Mouse>/rightButton",
+                    "interactions": "Press",
+                    "processors": "",
+                    "groups": "",
+                    "action": "NextWave",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

@@ -21,8 +21,6 @@ public class Dino : MonoBehaviour
     private Animator animator;
     
     float startXScale;
-    private MouseControls mouseControls;
-    Vector2 input_mousePosition;
 
     Vector2 direction;
 
@@ -36,40 +34,6 @@ public class Dino : MonoBehaviour
     {
         SetTarget(new Vector2(transform.position.x, transform.position.y));
         startXScale = transform.localScale.x;
-        mouseControls = new MouseControls();
-    }
-
-    void OnEnable()
-    {
-        mouseControls.Enable();
-    }
-
-    void OnDisable()
-    {
-        mouseControls.Disable();
-    }
-
-    void Start()
-    {
-        mouseControls.PlayerMouse.Position.performed += mP => input_mousePosition = mP.ReadValue<Vector2>();
-        mouseControls.PlayerMouse.SetTarget.performed += SetTarget;
-    }
-
-    private void SetTarget(InputAction.CallbackContext context)
-    {
-        Vector3 mousePos = Camera.main.ScreenToWorldPoint(input_mousePosition);
-        Vector2 cell = Board.GetGridCoordinatesFromWorldPosition(mousePos);
-        Vector2 position = Board.GetWorldPositionAt(cell);
-        /*Debug.Log("mousePos: " + mousePos); // DEBUG
-        Debug.Log("cell: " + cell);
-        Debug.Log("position: " + position);*/
-
-        Target = position;
-        SetSpeed();
-    }
-
-    void Update()
-    {
     }
 
     void FixedUpdate()
@@ -82,8 +46,7 @@ public class Dino : MonoBehaviour
         else
         {
             MoveTo(Target);
-        }
-            
+        }  
     }
 
     private void MoveTo(Vector2 _target)
@@ -110,7 +73,6 @@ public class Dino : MonoBehaviour
 
         moveSpeed = speed;
         animator.SetFloat("Speed", moveSpeed);
-        
     }
 
     private void SetScale()
