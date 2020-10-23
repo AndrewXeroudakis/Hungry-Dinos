@@ -22,11 +22,13 @@ public class Board : MonoBehaviour
     public Cell[,] grid;
     [SerializeField]
     private GameObject dino;
-
-    //public static List<int> monstersOnBoard = new List<int>();
+    
     public static Stack<KeyValuePair<Dino, Vector2>> monstersToMove;
 
     public static List<Cell> selectedCells;
+
+    public GameObject[] spells;
+    private Collider2D[] spellColliders;
 
     void Awake()
     {
@@ -59,6 +61,19 @@ public class Board : MonoBehaviour
                 grid[x, y] = new Cell(GetWorldPositionAt(new Vector2(x, -y)), x, y);
                 //Debug.Log("Coordinates: " + x + ", " + y + " --> Center: " + grid[x, y].Center); // DEBUG
                 //Instantiate(new GameObject(), grid[x, y].Center, Quaternion.identity);
+            }
+        }
+
+        if (spells != null)
+        {
+            spellColliders = new Collider2D[spells.Length];
+
+            for (int i = 0; i < spells.Length; i++)
+            {
+                if (spells[i] != null)
+                {
+                    spellColliders[i] = spells[i].GetComponent<Collider2D>();
+                }
             }
         }
     }
@@ -128,28 +143,7 @@ public class Board : MonoBehaviour
         monstersToMove.Clear();
     }
 
-    public List<Dino> GetMonstersOnBoard()
-    {
-        List<Dino> monstersOnBoard = new List<Dino>();
-
-        for (int x = 0; x < grid.GetLength(0); x++)
-        {
-            for (int y = 0; y < grid.GetLength(1); y++)
-            {
-                monstersOnBoard.Add(grid[x, y].Dino);
-            }
-        }
-        return monstersOnBoard;
-    }
-
-    public int GetRandomMonster()
-    {
-        List<Dino> monstersOnBoard = GetMonstersOnBoard();
-
-        int randomIndex = UnityEngine.Random.Range(1, monstersOnBoard.Count + 1);
-
-        return monstersOnBoard[randomIndex].Number;
-    }
+    
 
     public static List<Vector2> GenerateNewWaveCoordinates(int _waveSize)
     {
@@ -208,7 +202,7 @@ public class Board : MonoBehaviour
         if (selectedCells.Contains(_cell))
         {
             //selectedCells.Remove(_cell);
-            selectedCells.Clear();
+            DeselectCells();
             return;
         }
         
@@ -240,11 +234,12 @@ public class Board : MonoBehaviour
     {
         foreach (Cell cell in selectedCells)
         {
-            Destroy(cell.Dino.gameObject);
-            cell.SetDino(null);
+            if (cell.Dino != null)
+            {
+                Destroy(cell.Dino.gameObject);
+                cell.SetDino(null);
+            }
         }
-
-        selectedCells.Clear();
     }
 
     private List<Cell> GetNeighbours(Cell _cell)
@@ -271,6 +266,109 @@ public class Board : MonoBehaviour
         }
 
         return neighbours;
+    }
+
+    public Spell SelectSpell(Vector2 _mousePos)
+    {
+        Spell spell;
+
+        foreach (Collider2D col in spellColliders)
+        {
+            if (col != null && col.OverlapPoint(_mousePos))
+            {
+                spell = col.gameObject.GetComponent<Spell>();
+                return spell;
+            }
+        }
+        
+        return null;
+    }
+
+    public int EvaluateSpell(Spell _spell)
+    {
+        if (_spell != null)
+        {
+            if (selectedCells.Count > 0)
+            {
+                if (_spell.Number == SelectedMonsterSum())
+                {
+                    DestroySelectedDinos();
+                    _spell.gameObject.SetActive(false);
+                    return _spell.spellIndex;
+                }
+                else
+                    DeselectCells();
+            }
+            else
+            {
+
+            }
+        }
+
+        return -1;
+    }
+
+    private void DeselectCells()
+    {
+        selectedCells.Clear();
+    }
+
+    public int SelectedMonsterSum()
+    {
+        int selectedMonsterSum = 0;
+        foreach (Cell cell in selectedCells)
+        {
+            if (cell.Dino != null)
+            {
+                selectedMonsterSum += cell.Dino.Number;
+            }
+        }
+        return selectedMonsterSum;
+    }
+
+    public int GetMonsterSum()
+    {
+        int monsterSum = 0;
+        foreach (Dino monster in GetMonstersOnBoard())
+        {
+            if (monster != null)
+            {
+                monsterSum += monster.Number;
+            }
+        }
+        return monsterSum;
+    }
+
+    public List<Dino> GetMonstersOnBoard()
+    {
+        List<Dino> monstersOnBoard = new List<Dino>();
+
+        for (int x = 0; x < grid.GetLength(0); x++)
+        {
+            for (int y = 0; y < grid.GetLength(1); y++)
+            {
+                monstersOnBoard.Add(grid[x, y].Dino);
+            }
+        }
+        return monstersOnBoard;
+    }
+
+    public int GetRandomMonster()
+    {
+        List<Dino> monstersOnBoard = GetMonstersOnBoard();
+
+        int randomIndex = UnityEngine.Random.Range(1, monstersOnBoard.Count + 1);
+
+        return monstersOnBoard[randomIndex].Number;
+    }
+
+    public void ActivateSpells(List<int> _spells)
+    {
+        for (int i = 0; i < _spells.Count; i++)
+        {
+            if (spells[i] != null && !spells[i].activeInHierarchy)
+                spells[i].SetActive(true);
+        }
     }
 }
 

@@ -11,11 +11,15 @@ public class GameManager : MonoBehaviour
     // Game Fields
     enum Turns { PC, Player}
     int currentTurn;
-    Game game;
+    [HideInInspector]
+    public Game game;
 
     // Mouse Controls
     private MouseControls mouseControls;
     Vector2 input_mousePosition;
+
+    //Vector3 or; // DEBUG
+    //Vector3 dir; // DEBUG
 
     void Awake()
     {
@@ -64,13 +68,13 @@ public class GameManager : MonoBehaviour
         //game.GenerateSpell(12);
 
         mouseControls.PlayerMouse.Position.performed += mP => input_mousePosition = mP.ReadValue<Vector2>();
-        mouseControls.PlayerMouse.SelectCell.performed += SelectCell;
+        mouseControls.PlayerMouse.Select.performed += Select;
         mouseControls.PlayerMouse.NextWave.performed += NextWave;
     }
 
     void Update()
     {
-
+        //Raycast(or, dir);
     }
 
     private void NextWave(InputAction.CallbackContext context)
@@ -87,9 +91,15 @@ public class GameManager : MonoBehaviour
         game.Start();
     }
 
-    private void SelectCell(InputAction.CallbackContext context)
+    private void Select(InputAction.CallbackContext context)
     {
-        Vector3 mousePos = Camera.main.ScreenToWorldPoint(input_mousePosition);
+        Vector2 mousePos = Camera.main.ScreenToWorldPoint(input_mousePosition);
+        //mousePos.z = 0f;
+
+        //Debug.Log("input_mousePosition: " + input_mousePosition); // DEBUG
+        //Debug.Log("mousePos: " + mousePos); // DEBUG
+
+        // Select Cell
         Vector2 cellCoordinates = Board.GetGridCoordinatesFromWorldPosition(mousePos);
         if (cellCoordinates != -Vector2.one)
         {
@@ -101,6 +111,18 @@ public class GameManager : MonoBehaviour
             /*Debug.Log("cellCoordinates: " + cellCoordinates); // DEBUG
             Debug.Log("cellAtMousePosition: " + cellAtMousePosition);*/
         }
+
+        // Select Spell
+        int spellIndexToRemove = Board.Instance.EvaluateSpell(Board.Instance.SelectSpell(mousePos));
+        if (spellIndexToRemove > -1)
+        {
+            game.RemoveSpellAtIndex(spellIndexToRemove);
+        }
+    }
+
+    private void Raycast(Vector3 _origin, Vector3 _direction)
+    {
+        Debug.DrawRay(_origin, _direction * 200, Color.red); //(_direction - _origin).normalized
     }
 }
 
@@ -132,9 +154,6 @@ public class Game
     readonly static int maxSpells = 3;
     #endregion
     
-    // Board
-    //public static Board Board { get; private set; }
-
     // Difficulty
     public enum Difficulty { Easy, Medium, Hard }
     private string difficulty;
@@ -146,8 +165,7 @@ public class Game
     private int sumOfMonsters = 0;
 
     // Spells
-    //private int[] spells = new int[3];
-    List<int> spells = new List<int>();
+    public List<int> spells = new List<int>();
 
     public Game(string _difficulty)
     {
@@ -180,6 +198,14 @@ public class Game
     public void Start()
     {
         Board.Instance.NextWave(NextWave());
+
+        int monsterSum = Board.Instance.GetMonsterSum();
+        int spellSum = GetSpellSum();
+        Debug.Log("monsterSum: " + monsterSum); // DEBUG
+        Debug.Log("spellSum: " + spellSum); // DEBUG
+        GenerateSpell(monsterSum - spellSum);
+
+        Board.Instance.ActivateSpells(spells);
     }
 
     Queue<int[]> GenerateWaves(int _minMonsterNumber, int _maxMonsterNumber, int _minSum, int _maxSum)
@@ -230,7 +256,7 @@ public class Game
         return wave;
     }
 
-    public int GenerateSpell(int _remainder)
+    private int GenerateSpell(int _remainder)
     {
         if (_remainder <= 0 || spells.Count >= maxSpells)
             return 0;
@@ -238,7 +264,7 @@ public class Game
         int spell = (spells.Count < (maxSpells - 1)) ? UnityEngine.Random.Range(1, _remainder + 1) : _remainder;
 
         AddSpell(spell);
-        Debug.Log(spell); // DEBUG
+        Debug.Log("Spell: " + spell); // DEBUG
 
         return GenerateSpell(_remainder - spell);
     }
@@ -257,16 +283,40 @@ public class Game
 
     public void AddSpell(int _spell)
     {
-        //if (spells.Count < maxSpells)
+        if (spells.Count < maxSpells)
             spells.Add(_spell);
+
+        /*for (int i = 0; i < spellNumbers.Length; i++)
+        {
+            if (spellNumbers[i] == 0)
+            {
+                spellNumbers[i] = _spell;
+            }
+        }*/
     }
 
     public void RemoveSpellAtIndex(int _spellIndex)
     {
         spells.RemoveAt(_spellIndex);
+    }
+
+    /*public void RemoveSpellAtIndex(int _spellIndex)
+    {
+        spells.RemoveAt(_spellIndex);
 
         // Get a new spell equal to a monster from the board, needs to be decoupled
         AddSpell(Board.Instance.GetRandomMonster());
+    }*/
+
+    private int GetSpellSum()
+    {
+        int spellSum = 0;
+        foreach (int spell in spells)
+        {
+            spellSum += spell;
+        }
+
+        return spellSum;
     }
 
     public bool Victory()
@@ -338,15 +388,7 @@ public class Game
 
     
     
-    public int MonsterSum(List<int> _monstersOnBoard)
-    {
-        int monsterSum = 0;
-        foreach (int monster in _monstersOnBoard)
-        {
-            monsterSum += monster;
-        }
-        return monsterSum;
-    }
+    
 
     public static void UpdateBoard(List<Vector2> _newWavePositions)
     {

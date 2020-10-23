@@ -95,7 +95,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   numberHolder: {fileID: 21300000, guid: 36a333dbb0b5a834394c6a723b9615d8, type: 3}
-  numberHolderx2: {fileID: 21300000, guid: d67380047f5c4ba4cb959e3a6aa59544, type: 3}
+  numberHolderx2: {fileID: 21300000, guid: 8f7de83b22892454393e3ca1f35db282, type: 3}
   spriteRenderer: {fileID: 8903115430280888155}
   numberHolderText: {fileID: 3864450254895647463, guid: 61199a3f2286bc8479fbdef2ea33fd69,
     type: 3}

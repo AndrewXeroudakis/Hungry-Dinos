@@ -6,7 +6,7 @@
             "id": "775ec04e-733f-4a52-8c98-584aed21e29b",
             "actions": [
                 {
-                    "name": "SelectCell",
+                    "name": "Select",
                     "type": "Button",
                     "id": "095cc67b-b7ba-43d4-a34f-4f820971eb47",
                     "expectedControlType": "Button",
@@ -38,7 +38,7 @@
                     "interactions": "Press",
                     "processors": "",
                     "groups": "",
-                    "action": "SelectCell",
+                    "action": "Select",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },

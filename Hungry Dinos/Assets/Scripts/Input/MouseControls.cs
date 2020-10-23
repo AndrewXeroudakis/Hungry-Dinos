@@ -19,7 +19,7 @@ public class @MouseControls : IInputActionCollection, IDisposable
             ""id"": ""775ec04e-733f-4a52-8c98-584aed21e29b"",
             ""actions"": [
                 {
-                    ""name"": ""SelectCell"",
+                    ""name"": ""Select"",
                     ""type"": ""Button"",
                     ""id"": ""095cc67b-b7ba-43d4-a34f-4f820971eb47"",
                     ""expectedControlType"": ""Button"",
@@ -51,7 +51,7 @@ public class @MouseControls : IInputActionCollection, IDisposable
                     ""interactions"": ""Press"",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""SelectCell"",
+                    ""action"": ""Select"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -84,7 +84,7 @@ public class @MouseControls : IInputActionCollection, IDisposable
 }");
         // PlayerMouse
         m_PlayerMouse = asset.FindActionMap("PlayerMouse", throwIfNotFound: true);
-        m_PlayerMouse_SelectCell = m_PlayerMouse.FindAction("SelectCell", throwIfNotFound: true);
+        m_PlayerMouse_Select = m_PlayerMouse.FindAction("Select", throwIfNotFound: true);
         m_PlayerMouse_NextWave = m_PlayerMouse.FindAction("NextWave", throwIfNotFound: true);
         m_PlayerMouse_Position = m_PlayerMouse.FindAction("Position", throwIfNotFound: true);
     }
@@ -136,14 +136,14 @@ public class @MouseControls : IInputActionCollection, IDisposable
     // PlayerMouse
     private readonly InputActionMap m_PlayerMouse;
     private IPlayerMouseActions m_PlayerMouseActionsCallbackInterface;
-    private readonly InputAction m_PlayerMouse_SelectCell;
+    private readonly InputAction m_PlayerMouse_Select;
     private readonly InputAction m_PlayerMouse_NextWave;
     private readonly InputAction m_PlayerMouse_Position;
     public struct PlayerMouseActions
     {
         private @MouseControls m_Wrapper;
         public PlayerMouseActions(@MouseControls wrapper) { m_Wrapper = wrapper; }
-        public InputAction @SelectCell => m_Wrapper.m_PlayerMouse_SelectCell;
+        public InputAction @Select => m_Wrapper.m_PlayerMouse_Select;
         public InputAction @NextWave => m_Wrapper.m_PlayerMouse_NextWave;
         public InputAction @Position => m_Wrapper.m_PlayerMouse_Position;
         public InputActionMap Get() { return m_Wrapper.m_PlayerMouse; }
@@ -155,9 +155,9 @@ public class @MouseControls : IInputActionCollection, IDisposable
         {
             if (m_Wrapper.m_PlayerMouseActionsCallbackInterface != null)
             {
-                @SelectCell.started -= m_Wrapper.m_PlayerMouseActionsCallbackInterface.OnSelectCell;
-                @SelectCell.performed -= m_Wrapper.m_PlayerMouseActionsCallbackInterface.OnSelectCell;
-                @SelectCell.canceled -= m_Wrapper.m_PlayerMouseActionsCallbackInterface.OnSelectCell;
+                @Select.started -= m_Wrapper.m_PlayerMouseActionsCallbackInterface.OnSelect;
+                @Select.performed -= m_Wrapper.m_PlayerMouseActionsCallbackInterface.OnSelect;
+                @Select.canceled -= m_Wrapper.m_PlayerMouseActionsCallbackInterface.OnSelect;
                 @NextWave.started -= m_Wrapper.m_PlayerMouseActionsCallbackInterface.OnNextWave;
                 @NextWave.performed -= m_Wrapper.m_PlayerMouseActionsCallbackInterface.OnNextWave;
                 @NextWave.canceled -= m_Wrapper.m_PlayerMouseActionsCallbackInterface.OnNextWave;
@@ -168,9 +168,9 @@ public class @MouseControls : IInputActionCollection, IDisposable
             m_Wrapper.m_PlayerMouseActionsCallbackInterface = instance;
             if (instance != null)
             {
-                @SelectCell.started += instance.OnSelectCell;
-                @SelectCell.performed += instance.OnSelectCell;
-                @SelectCell.canceled += instance.OnSelectCell;
+                @Select.started += instance.OnSelect;
+                @Select.performed += instance.OnSelect;
+                @Select.canceled += instance.OnSelect;
                 @NextWave.started += instance.OnNextWave;
                 @NextWave.performed += instance.OnNextWave;
                 @NextWave.canceled += instance.OnNextWave;
@@ -183,7 +183,7 @@ public class @MouseControls : IInputActionCollection, IDisposable
     public PlayerMouseActions @PlayerMouse => new PlayerMouseActions(this);
     public interface IPlayerMouseActions
     {
-        void OnSelectCell(InputAction.CallbackContext context);
+        void OnSelect(InputAction.CallbackContext context);
         void OnNextWave(InputAction.CallbackContext context);
         void OnPosition(InputAction.CallbackContext context);
     }
