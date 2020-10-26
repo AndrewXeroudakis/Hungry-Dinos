@@ -21,13 +21,19 @@ public class Board : MonoBehaviour
 
     public Cell[,] grid;
     [SerializeField]
-    private GameObject dino;
-    
+    private GameObject[] dinos;
+    [SerializeField]
+    private GameObject selection;
+
     public static Stack<KeyValuePair<Dino, Vector2>> monstersToMove;
+    
+    private List<GameObject> selections;
 
     public static List<Cell> selectedCells;
+    public static Spell selectedSpell;
 
     public GameObject[] spells;
+    public GameObject[] tents;
     private Collider2D[] spellColliders;
 
     void Awake()
@@ -50,9 +56,11 @@ public class Board : MonoBehaviour
     public void Initialize()
     {
         grid = new Cell[width, height];
-
+        //ActivateTents();
         monstersToMove = new Stack<KeyValuePair<Dino, Vector2>>();
+        selections = new List<GameObject>();
         selectedCells = new List<Cell>();
+        selectedSpell = null;
 
         for (int x = 0; x < grid.GetLength(0); x++)
         {
@@ -102,15 +110,39 @@ public class Board : MonoBehaviour
         }
     }
 
-    private Dino InstantiateMonster(int _number, Vector2 newWavePosition)
+    private Dino InstantiateMonster(int _number, Vector2 _newWavePosition)
     {
-        Vector2 worldPosition = GetWorldPositionAt(new Vector2(newWavePosition.x + 2, newWavePosition.y));
+        Vector2 worldPosition = GetWorldPositionAt(new Vector2(_newWavePosition.x + 2, _newWavePosition.y));
+
+        GameObject dino;
+        if (_number <= 4)
+        {
+            dino = dinos[0];
+        }
+        else if (_number > 4 && _number <= 9)
+        {
+            dino = dinos[1];
+        }
+        else if (_number > 9 && _number <= 14)
+        {
+            dino = dinos[2];
+        }
+        else
+        {
+            dino = dinos[3];
+        }
 
         GameObject newMonster = Instantiate(dino, worldPosition, Quaternion.identity);
         Dino newDino = newMonster.GetComponent<Dino>();
         newDino.SetNumber(_number);
 
         return newDino;
+    }
+
+    private void InstantiateSelection(Vector2 _worldPosition)
+    {
+        GameObject selectionObj = Instantiate(selection, _worldPosition, Quaternion.identity);
+        selections.Add(selectionObj);
     }
 
     private void GetMonstersToMove(Vector2 _positionToCheck)
@@ -122,7 +154,7 @@ public class Board : MonoBehaviour
 
         if (dino != null) // Check if board position has a monster
         {
-            Vector2 positionToMove = new Vector2(_positionToCheck.x - 1, _positionToCheck.y); 
+            Vector2 positionToMove = new Vector2(_positionToCheck.x - 1, _positionToCheck.y);
             monstersToMove.Push(new KeyValuePair<Dino, Vector2>(dino, positionToMove));
             GetMonstersToMove(positionToMove);
         }
@@ -136,14 +168,16 @@ public class Board : MonoBehaviour
             Vector2 coordinatesToMove = keyValuePair.Value;
             Cell cell = grid[(int)coordinatesToMove.x, Mathf.Abs((int)coordinatesToMove.y)];
             cell.SetDino(dino);
-            dino.SetTarget(cell.Center);
+            if (coordinatesToMove.x == 0)
+                dino.SetTarget(new Vector2(cell.Center.x - 24, cell.Center.y));
+            else
+                dino.SetTarget(cell.Center);
             //Debug.Log((int)cellCenter.x + ", " + (int)cellCenter.y); // DEBUG
+            
         }
 
         monstersToMove.Clear();
     }
-
-    
 
     public static List<Vector2> GenerateNewWaveCoordinates(int _waveSize)
     {
@@ -211,7 +245,8 @@ public class Board : MonoBehaviour
             if (selectedCells.Count <= 0)
             {
                 selectedCells.Add(_cell);
-                Debug.Log("Selected Cell: [" + _cell.gridX + ", " + _cell.gridY + "]"); // DEBUG
+                //Debug.Log("Selected Cell: [" + _cell.gridX + ", " + _cell.gridY + "]"); // DEBUG
+                InstantiateSelection(_cell.Center);
                 return;
             }
             else
@@ -223,7 +258,8 @@ public class Board : MonoBehaviour
                     if (selectedCells.Contains(cell))
                     {
                         selectedCells.Add(_cell);
-                        Debug.Log("Selected Cell: [" + _cell.gridX + ", " + _cell.gridY + "]"); // DEBUG
+                        //Debug.Log("Selected Cell: [" + _cell.gridX + ", " + _cell.gridY + "]"); // DEBUG
+                        InstantiateSelection(_cell.Center);
                     }
                 }
             }
@@ -240,6 +276,7 @@ public class Board : MonoBehaviour
                 cell.SetDino(null);
             }
         }
+        DeselectCells();
     }
 
     private List<Cell> GetNeighbours(Cell _cell)
@@ -290,18 +327,36 @@ public class Board : MonoBehaviour
         {
             if (selectedCells.Count > 0)
             {
-                if (_spell.Number == SelectedMonsterSum())
+                if (_spell.Number == SelectedMonsterSum()) // Match and Destroy
                 {
                     DestroySelectedDinos();
                     _spell.gameObject.SetActive(false);
                     return _spell.spellIndex;
                 }
-                else
+                else // Deselect all
+                {
                     DeselectCells();
+                    //DeselectSpells();
+                }
             }
-            else
+            else // Select spell
             {
-
+                if (selectedSpell != null && selectedSpell == _spell)
+                {
+                    DeselectSpell();
+                    DestroySelections();
+                }
+                else if (selectedSpell != null && selectedSpell != _spell) // Add spells
+                {
+                    selectedSpell.gameObject.SetActive(false);
+                    DeselectCells();
+                    return _spell.spellIndex + 10;
+                }
+                else // Select spell
+                {
+                    selectedSpell = _spell;
+                    InstantiateSelection(selectedSpell.transform.position);
+                } 
             }
         }
 
@@ -311,6 +366,20 @@ public class Board : MonoBehaviour
     private void DeselectCells()
     {
         selectedCells.Clear();
+        DestroySelections();
+    }
+
+    public static void DeselectSpell()
+    {
+        selectedSpell = null;
+    }
+
+    private void DestroySelections()
+    {
+        foreach (GameObject selection in selections)
+        {
+            Destroy(selection.gameObject);
+        }
     }
 
     public int SelectedMonsterSum()
@@ -368,6 +437,14 @@ public class Board : MonoBehaviour
         {
             if (spells[i] != null && !spells[i].activeInHierarchy)
                 spells[i].SetActive(true);
+        }
+    }
+
+    public void ActivateTents()
+    {
+        foreach (GameObject tent in tents)
+        {
+            tent.SetActive(true);
         }
     }
 }

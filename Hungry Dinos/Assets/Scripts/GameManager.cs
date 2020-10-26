@@ -51,8 +51,7 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        game = new Game("Easy"); //((Game.Difficulty).0).ToString()
-
+        game = new Game("Hard"); //((Game.Difficulty).0).ToString()
         game.Start();
         //Board.GenerateNewWavePositions(2);
 
@@ -114,9 +113,16 @@ public class GameManager : MonoBehaviour
 
         // Select Spell
         int spellIndexToRemove = Board.Instance.EvaluateSpell(Board.Instance.SelectSpell(mousePos));
-        if (spellIndexToRemove > -1)
+        if (spellIndexToRemove > -1 && spellIndexToRemove < 3)
         {
             game.RemoveSpellAtIndex(spellIndexToRemove);
+        }
+        else if (spellIndexToRemove >= 3) // Spell Addition
+        {
+            int decodedSpellIndex = spellIndexToRemove - 10;
+            Debug.Log("decodedSpellIndex: " + decodedSpellIndex);
+            game.SpellAddition(Board.selectedSpell.spellIndex, decodedSpellIndex);
+            Board.DeselectSpell();
         }
     }
 
@@ -199,13 +205,14 @@ public class Game
     {
         Board.Instance.NextWave(NextWave());
 
+        RemoveZeroSpells();
         int monsterSum = Board.Instance.GetMonsterSum();
         int spellSum = GetSpellSum();
         Debug.Log("monsterSum: " + monsterSum); // DEBUG
         Debug.Log("spellSum: " + spellSum); // DEBUG
         GenerateSpell(monsterSum - spellSum);
-
-        Board.Instance.ActivateSpells(spells);
+        ResetSpellsOnBoard();
+        //Board.Instance.ActivateSpells(spells);
     }
 
     Queue<int[]> GenerateWaves(int _minMonsterNumber, int _maxMonsterNumber, int _minSum, int _maxSum)
@@ -256,6 +263,19 @@ public class Game
         return wave;
     }
 
+    private void ResetSpellsOnBoard()
+    {
+        foreach (GameObject gameObjSpell in Board.Instance.spells)
+        {
+            gameObjSpell.SetActive(false);
+        }
+
+        for (int i = 0; i < spells.Count; i++)
+        {
+            Board.Instance.spells[i].SetActive(true);
+        }
+    }
+
     private int GenerateSpell(int _remainder)
     {
         if (_remainder <= 0 || spells.Count >= maxSpells)
@@ -272,12 +292,44 @@ public class Game
     public void SpellAddition(int _spellIndexA, int _spellIndexB) // A-->B
     {
         spells[_spellIndexB] = spells[_spellIndexA] + spells[_spellIndexB];
-        spells.RemoveAt(_spellIndexA);
+        spells[_spellIndexA] = 0;
+        //spells.RemoveAt(_spellIndexA);
+        Spell spellToReset = Board.Instance.spells[_spellIndexB].gameObject.GetComponent<Spell>();
+        spellToReset.SetNumber(spells[_spellIndexB]);
+        spellToReset.SetNumberHolderText();
 
         Debug.Log("After addition"); // DEBUG
         foreach (int spell in spells) // DEBUG
         {
             Debug.Log(spell);
+        }
+    }
+
+    private void RemoveZeroSpells()
+    {
+        /*List<int> indexesToRemove = new List<int>();
+
+        for (int i = 0; i < spells.Count; i++)
+        {
+            if (spells[i].Equals(0))
+            {
+                indexesToRemove.Add(i);
+            }
+        }
+
+        foreach (int index in indexesToRemove)
+        {
+            spells.RemoveAt(index);
+            Debug.Log("Removed at index: " + index); // DEBUG
+        }*/
+
+        for (int i = 0; i < spells.Count; i++)
+        {
+            if (spells[i] == 0)
+            {
+                spells.RemoveAt(i);
+                i--;
+            }
         }
     }
 

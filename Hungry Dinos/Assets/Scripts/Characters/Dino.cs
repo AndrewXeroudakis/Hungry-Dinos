@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public class Dino : MonoBehaviour
 {
@@ -36,12 +37,27 @@ public class Dino : MonoBehaviour
         startXScale = transform.localScale.x;
     }
 
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.name.StartsWith("Tent"))
+        {
+            other.gameObject.SetActive(false);
+            Destroy(gameObject);
+        }
+    }
+
     void FixedUpdate()
     {
         if (ArrivedAt(Target))
         {
             rigidbody2D.position = Target;
             SetSpeed();
+
+            if (Target.x <= -40)
+            {
+                // Game Over
+                //SceneManager.LoadScene("Game");
+            }
         }
         else
         {

@@ -35,14 +35,14 @@ public class Spell : MonoBehaviour
 
     void Update()
     {
-        myRectTransform.transform.position = new Vector3(transform.position.x, transform.position.y, 0f);
+        myRectTransform.transform.position = new Vector3(transform.position.x, transform.position.y + 1.8f, 0f);
     }
 
     private void InstantiateNumberHolderText()
     {
         if (canvas == null)
             canvas = FindObjectOfType<Canvas>();
-        myNumberHolderText = Instantiate(numberHolderText, new Vector2(transform.position.x, transform.position.y), Quaternion.identity);
+        myNumberHolderText = Instantiate(numberHolderText, new Vector2(transform.position.x, transform.position.y + 1.8f), Quaternion.identity);
         myNumberHolderText.transform.SetParent(canvas.transform);
         myRectTransform = myNumberHolderText.GetComponent<RectTransform>();
         myRectTransform.localScale = new Vector3(1f, 1f, 1f);
@@ -57,7 +57,7 @@ public class Spell : MonoBehaviour
         Number = _number;
     }
 
-    private void SetNumberHolderText()
+    public void SetNumberHolderText()
     {
         if (myNumberHolderText != null)
             myNumberHolderText.GetComponent<TMP_Text>().text = Number < 10 ? " " + Number.ToString() : Number.ToString();
