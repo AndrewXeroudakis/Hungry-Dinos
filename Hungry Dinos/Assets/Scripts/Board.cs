@@ -34,6 +34,8 @@ public class Board : MonoBehaviour
 
     public GameObject[] spells;
     public GameObject[] tents;
+    public GameObject victoryText;
+    public GameObject defeatText;
     private Collider2D[] spellColliders;
 
     void Awake()
@@ -86,14 +88,46 @@ public class Board : MonoBehaviour
         }
     }
 
-    public void NextWave(int[] _wave)
+    public void ResetBoard()
+    {
+        ResetMonstersOnBoard();
+        ActivateTents();
+        Board.Instance.victoryText.SetActive(false);
+        Board.Instance.defeatText.SetActive(false);
+        DeselectCells();
+        DeselectSpell();
+        monstersToMove = new Stack<KeyValuePair<Dino, Vector2>>();
+        selections = new List<GameObject>();
+        selectedCells = new List<Cell>();
+        selectedSpell = null;
+    }
+
+    private void ResetMonstersOnBoard()
+    {
+        for (int x = 0; x < grid.GetLength(0); x++)
+        {
+            for (int y = 0; y < grid.GetLength(1); y++)
+            {
+                if (grid[x, y].Dino != null)
+                {
+                    Destroy(grid[x, y].Dino.gameObject);
+                    grid[x, y].SetDino(null);
+                }
+            }
+        }
+    }
+
+    public bool NextWave(int[] _wave)
     {
         if (_wave != null)
         {
             List<Vector2> newWaveCoordinates = GenerateNewWaveCoordinates(_wave.Length);
             InstantiateAndGetMonstersToMove(_wave, newWaveCoordinates);
             MoveMonsters();
+            return true;
         }
+        else
+            return false;
     }
 
     private void InstantiateAndGetMonstersToMove(int[] _wave, List<Vector2> _newWaveCoordinates)

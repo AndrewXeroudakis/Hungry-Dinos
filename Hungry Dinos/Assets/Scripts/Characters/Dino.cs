@@ -56,7 +56,7 @@ public class Dino : MonoBehaviour
             if (Target.x <= -40)
             {
                 // Game Over
-                //SceneManager.LoadScene("Game");
+                Board.Instance.defeatText.SetActive(true);
             }
         }
         else

@@ -51,8 +51,8 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        game = new Game("Hard"); //((Game.Difficulty).0).ToString()
-        game.Start();
+        //game = new Game("Easy"); //((Game.Difficulty).0).ToString()
+        //game.StartNextRound();
         //Board.GenerateNewWavePositions(2);
 
         //game.DisplayWaves();
@@ -65,6 +65,7 @@ public class GameManager : MonoBehaviour
         //game.SpellAddition(2, 0);
         //game.SpellAddition(1, 0);
         //game.GenerateSpell(12);
+        StartNewGame("Hard");
 
         mouseControls.PlayerMouse.Position.performed += mP => input_mousePosition = mP.ReadValue<Vector2>();
         mouseControls.PlayerMouse.Select.performed += Select;
@@ -76,18 +77,28 @@ public class GameManager : MonoBehaviour
         //Raycast(or, dir);
     }
 
+    private void StartNewGame(string _difficulty)
+    {
+        Board.Instance.ResetBoard();
+        game = new Game(_difficulty);
+        game.StartNextRound();
+    }
+
     private void NextWave(InputAction.CallbackContext context)
     {
-        /*Vector3 mousePos = input_mousePosition; //Camera.main.ScreenToWorldPoint();
-        Vector2 cell = Board.GetGridCoordinatesFromWorldPosition(mousePos);
-        Vector2 position = Board.GetWorldPositionAt(cell);
-        Debug.Log("mousePos: " + mousePos); // DEBUG
-        Debug.Log("cell: " + cell);
-        Debug.Log("position: " + position);*/
+        Vector2 mousePos = Camera.main.ScreenToWorldPoint(input_mousePosition);
+        Spell spell = Board.Instance.SelectSpell(mousePos);
+        int spellIndex = -1;
+        if (spell != null)
+            spellIndex = spell.spellIndex;
+        if (spellIndex != -1)
+        {
+            //Debug.Log("Selected Spell: " + spellIndex);
+            game.ReplaceSpellAtIndex(spellIndex);
+        }
 
-        Board.Instance.DestroySelectedDinos();
 
-        game.Start();
+        game.StartNextRound();
     }
 
     private void Select(InputAction.CallbackContext context)
@@ -116,6 +127,7 @@ public class GameManager : MonoBehaviour
         if (spellIndexToRemove > -1 && spellIndexToRemove < 3)
         {
             game.RemoveSpellAtIndex(spellIndexToRemove);
+            game.StartNextRound();
         }
         else if (spellIndexToRemove >= 3) // Spell Addition
         {
@@ -201,10 +213,16 @@ public class Game
         }
     }
 
-    public void Start()
+    public void StartNextRound()
     {
-        Board.Instance.NextWave(NextWave());
-
+        if (!Board.Instance.NextWave(NextWave()))
+        {
+            Debug.Log("VICTORY!");
+            if (Victory())
+            {
+                Board.Instance.victoryText.SetActive(true);
+            }
+        }
         RemoveZeroSpells();
         int monsterSum = Board.Instance.GetMonsterSum();
         int spellSum = GetSpellSum();
@@ -352,13 +370,13 @@ public class Game
         spells.RemoveAt(_spellIndex);
     }
 
-    /*public void RemoveSpellAtIndex(int _spellIndex)
+    public void ReplaceSpellAtIndex(int _spellIndex)
     {
-        spells.RemoveAt(_spellIndex);
-
+        spells[_spellIndex] = Board.Instance.GetRandomMonster();
+        ResetSpellsOnBoard();
         // Get a new spell equal to a monster from the board, needs to be decoupled
-        AddSpell(Board.Instance.GetRandomMonster());
-    }*/
+        //AddSpell(Board.Instance.GetRandomMonster());
+    }
 
     private int GetSpellSum()
     {
@@ -373,7 +391,7 @@ public class Game
 
     public bool Victory()
     {
-        if (waves.Count == 0 && Board.Instance.GetMonstersOnBoard().Count == 0)
+        if (Board.Instance.GetMonstersOnBoard().Count <= 0) //waves.Count <= 0 && 
             return true;
         return false;
     }
